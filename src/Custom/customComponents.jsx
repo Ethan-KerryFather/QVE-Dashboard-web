@@ -23,7 +23,7 @@ export const Word = styled.p`
       ? "0.7rem"
       : props.size2
       ? "1rem"
-      : props.size3
+      : props.size3 
       ? "1.3rem"
       : props.size4
       ? "1.5rem"

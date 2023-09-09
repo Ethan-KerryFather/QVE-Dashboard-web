@@ -7,15 +7,21 @@ import {
   InputAdornment,
   InputLabel,
   TextField,
+  Tooltip,
 } from "@mui/material";
 import { useState } from "react";
 import { FlexBox, StyledLoginText, Word } from "./Custom/customComponents";
 import GoogleIcon from "@mui/icons-material/Google";
-import { getAuth, signInWithEmailAndPassword } from "firebase/auth";
+import {
+  GoogleAuthProvider,
+  getAuth,
+  signInWithEmailAndPassword,
+} from "firebase/auth";
 import Swal from "sweetalert2";
 import { Visibility, VisibilityOff } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
-
+import { signInwithGoogle } from "./firebase/googleAuth";
+import { app } from "./firebase/firebaseConfig";
 const EContainer = styled.div`
   display: flex;
   flex-flow: column wrap;
@@ -31,19 +37,72 @@ const PContainer = styled.div`
   flex-flow: column wrap;
   align-items: ${(props) => (props.rowCenter ? "center" : "flex-start")};
   justify-content: ${(props) => (props.columnCenter ? "center" : "flex-start")};
-  background-image: ${require("./Asset/image/background.svg")};
 `;
 
 function App() {
+  //const googleProvider = new GoogleAuthProvider();
   const [id, setId] = useState("");
   const [pw, setPw] = useState("");
-  const auth = getAuth();
+  const auth = getAuth(app);
+
   const [isLogin, setIsLogin] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const handleClickShowPassword = () => setShowPassword((show) => !show);
   const navigation = useNavigate();
   const handleMouseDownPassword = (event) => {
     event.preventDefault();
+  };
+
+  const handleLogin = () => {
+    signInWithEmailAndPassword(auth, id, pw)
+      .then((userCredential) => {
+        const user = userCredential.user;
+        if (user) {
+          setIsLogin(true);
+          const Toast = Swal.mixin({
+            toast: true,
+            position: "top-end",
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+              toast.addEventListener("mouseenter", Swal.stopTimer);
+              toast.addEventListener("mouseleave", Swal.resumeTimer);
+            },
+          });
+
+          Toast.fire({
+            icon: "success",
+            title: "Signed in successfully",
+          });
+        }
+        navigation("/dashboard");
+      })
+      .catch((error) => {
+        console.error(error);
+        const Toast = Swal.mixin({
+          toast: true,
+          position: "top-end",
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true,
+          didOpen: (toast) => {
+            toast.addEventListener("mouseenter", Swal.stopTimer);
+            toast.addEventListener("mouseleave", Swal.resumeTimer);
+          },
+        });
+
+        Toast.fire({
+          icon: "error",
+          title: "Invalid User Information",
+        });
+      });
+  };
+
+  const handleKeyDown = (event) => {
+    if (event.key === "Enter") {
+      handleLogin();
+    }
   };
 
   return (
@@ -87,6 +146,7 @@ function App() {
             onChange={(e) => {
               setPw(e.target.value);
             }}
+            onKeyDown={handleKeyDown}
             id="filled-adornment-password"
             type={showPassword ? "text" : "password"}
             endAdornment={
@@ -113,32 +173,23 @@ function App() {
           variant="contained"
           style={{ width: "80%", borderRadius: "10px" }}
           onClick={() => {
-            signInWithEmailAndPassword(auth, id, pw)
-              .then((userCredential) => {
-                const user = userCredential.user;
-                if (user) {
-                  setIsLogin(true);
-                  const Toast = Swal.mixin({
-                    toast: true,
-                    position: "top-end",
-                    showConfirmButton: false,
-                    timer: 3000,
-                    timerProgressBar: true,
-                    didOpen: (toast) => {
-                      toast.addEventListener("mouseenter", Swal.stopTimer);
-                      toast.addEventListener("mouseleave", Swal.resumeTimer);
-                    },
-                  });
+            handleLogin();
+          }}
+        >
+          Login
+        </Button>
 
-                  Toast.fire({
-                    icon: "success",
-                    title: "Signed in successfully",
-                  });
-                }
-                navigation("/dashboard");
-              })
-              .catch((error) => {
-                console.error(error);
+        <FlexBox style={{ marginTop: "5%" }}>
+          <Word size2 sub>
+            Or Sign Up Using
+          </Word>
+          <Tooltip title="Login & Sign up with Google">
+            <FlexBox
+              row
+              style={{ justifyContent: "center" }}
+              onClick={async () => {
+                const response = await signInwithGoogle();
+                setIsLogin(true);
                 const Toast = Swal.mixin({
                   toast: true,
                   position: "top-end",
@@ -152,32 +203,32 @@ function App() {
                 });
 
                 Toast.fire({
-                  icon: "error",
-                  title: "Invalid User Information",
+                  icon: "success",
+                  title: `Welcome! ${response?.user?.email}`,
                 });
-              });
-          }}
-        >
-          Login
-        </Button>
-
-        <FlexBox style={{ marginTop: "5%" }}>
-          <Word size2 sub>
-            Or Sign Up Using
-          </Word>
-          <FlexBox row style={{ justifyContent: "center" }}>
-            <GoogleIcon
-              style={{
-                backgroundColor: "red",
-                padding: "8px",
-                borderRadius: "50%",
-                color: "white",
+                navigation("/dashboard");
               }}
-            />
-          </FlexBox>
+            >
+              <GoogleIcon
+                style={{
+                  backgroundColor: "red",
+                  padding: "8px",
+                  borderRadius: "50%",
+                  color: "white",
+                }}
+              />
+            </FlexBox>
+          </Tooltip>
         </FlexBox>
         <FlexBox style={{ marginTop: "5%" }}>
-          <Word size1>SIGN UP</Word>
+          <Word
+            size1
+            onClick={() => {
+              navigation("/signin");
+            }}
+          >
+            SIGN UP
+          </Word>
         </FlexBox>
       </PContainer>
     </EContainer>

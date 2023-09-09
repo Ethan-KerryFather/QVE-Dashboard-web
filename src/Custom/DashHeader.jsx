@@ -1,7 +1,7 @@
 import { Chip, Tooltip } from "@mui/material";
 import { FlexBox, PContainer, Word } from "./customComponents";
 import HelpIcon from "@mui/icons-material/Help";
-import { getAuth } from "firebase/auth";
+
 const InfoBox = ({ title, rate }) => {
   return (
     <FlexBox>
@@ -9,11 +9,11 @@ const InfoBox = ({ title, rate }) => {
         <Word size2>{title}&nbsp;</Word>
         <Tooltip
           title={
-            title == "todayPNL"
+            title === "todayPNL"
               ? "today's profit and loss"
-              : title == "monthPNL"
+              : title === "monthPNL"
               ? "month's profit and loss"
-              : title == "Balance"
+              : title === "Balance"
               ? "Your Balance"
               : ""
           }
@@ -23,7 +23,15 @@ const InfoBox = ({ title, rate }) => {
       </FlexBox>
 
       <FlexBox row style={{ alignItems: "center" }}>
-        <Word size3>+ ${rate.toLocaleString()}&nbsp;&nbsp;</Word>
+        {title === "todayPNL" ? (
+          <Word size3>{rate.toLocaleString()}$&nbsp;&nbsp;</Word>
+        ) : title === "monthPNL" ? (
+          <Word size3>
+            {rate > 0 ? "+" : "-"} {rate.toLocaleString()}%&nbsp;&nbsp;
+          </Word>
+        ) : (
+          <Word size3>{rate} USDT&nbsp;&nbsp;</Word>
+        )}
         <Chip label={`+0.02%`} color="primary" />
       </FlexBox>
     </FlexBox>
